@@ -3,7 +3,7 @@
 // import viteLogo from './assets/vite.svg'
 // import heroImg from './assets/hero.png'
 import './App.css'
-import LorenzAttractor from './components/ThreeScene'
+import StrangeAttractors from './components/ThreeScene'
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -11,7 +11,7 @@ function App() {
   return (
     <>
       <section id="center">
-        <LorenzAttractor />
+        <StrangeAttractors />
         {/* <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
           <img src={reactLogo} className="framework" alt="React logo" />
