@@ -2,8 +2,10 @@
 // import reactLogo from './assets/react.svg'
 // import viteLogo from './assets/vite.svg'
 // import heroImg from './assets/hero.png'
+import { lazy, Suspense } from 'react';
 import './App.css'
-import StrangeAttractors from './components/ThreeScene'
+
+const StrangeAttractors = lazy(() => import('./components/ThreeScene'));
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -11,7 +13,9 @@ function App() {
   return (
     <>
       <section id="center">
-        <StrangeAttractors />
+        <Suspense fallback={<div className="center-text">Loading...</div>}>
+          <StrangeAttractors />
+        </Suspense>
         {/* <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
           <img src={reactLogo} className="framework" alt="React logo" />
