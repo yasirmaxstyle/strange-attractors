@@ -4,6 +4,8 @@ import { Leva, button, folder, useControls } from "leva";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
+
 function AttractorSystem() {
     const pointsRef = useRef<THREE.Points>(null);
     const geometryRef = useRef<THREE.BufferGeometry>(null);
@@ -26,7 +28,7 @@ function AttractorSystem() {
         // Limits set: Min 10k, Max 300k. Going too high can drop frames heavily.
         particleCount: { value: 100000, min: 10000, max: 300000, step: 5000 },
         autoRotate: true,
-        dt: { value: 0.01, min: 0.001, max: 0.05, step: 0.001 },
+        dt: { value: 0.005, min: 0.001, max: 0.05, step: 0.001 },
         animationSpeed: { value: 1, min: 1, max: 10, step: 1 },
         particleColor: "#75bbfd",
         toggleAnimation: button(() => { setIsAnimating((prev) => !prev) }),
@@ -49,6 +51,22 @@ function AttractorSystem() {
             aizawaE: { value: 0.10, min: 0.01, max: 1.0, step: 0.01, label: "e" },
         }, { render: (get) => get("attractorType") === "Aizawa" }),
     });
+
+    // 2. Generate a "Soft Dot" texture using an invisible HTML canvas
+    const particleTexture = useMemo(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        const context = canvas.getContext("2d");
+        if (context) {
+            const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, "rgba(255,255,255,1)");
+            gradient.addColorStop(1, "rgba(255,255,255,0)"); // Fade to transparent edges
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 32, 32);
+        }
+        return new THREE.CanvasTexture(canvas);
+    }, []);
 
     // Re-allocate array only when particleCount changes
     const positions = useMemo(() => {
@@ -121,12 +139,14 @@ function AttractorSystem() {
             </bufferGeometry>
 
             <pointsMaterial
-                size={0.12}
+                size={0.15}            // Slightly larger to allow the soft edges to overlap
+                map={particleTexture}  // Apply the soft texture
                 color={particleColor}
                 transparent
-                opacity={0.4}
+                opacity={0.15}         // Lower opacity heavily! The bloom will multiply the brightness
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
+                alphaTest={0.001}      // Helps prevent weird sorting artifacts with transparency
                 sizeAttenuation
             />
         </points>
@@ -166,6 +186,15 @@ export default function StrangeAttractors() {
                 <color attach="background" args={["#080808"]} />
                 <AttractorSystem />
                 <OrbitControls enableDamping dampingFactor={0.05} />
+
+                <EffectComposer>
+                    <Bloom
+                        luminanceThreshold={0.1} // How bright a pixel needs to be to trigger bloom
+                        luminanceSmoothing={0.9}
+                        intensity={1.5}          // Overall strength of the glow
+                        mipmapBlur               // Creates a highly organic, smooth dispersion of light
+                    />
+                </EffectComposer>
             </Canvas>
         </div>
     );
